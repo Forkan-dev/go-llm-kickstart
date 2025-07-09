@@ -10,7 +10,8 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port int `yaml:"port"`
+	Port      int    `yaml:"port"`
+	JWTSecret string `yaml:"jwt_secret"`
 }
 
 func Load() (*Config, error) {

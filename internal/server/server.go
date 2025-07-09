@@ -29,8 +29,8 @@ func StartServer(cfg *config.Config) {
 
 	// Register API routes
 	apiGroup := router.Group("/api/v1")
-	backend.RegisterRoutes(apiGroup)
-	frontend.RegisterRoutes(apiGroup)
+	backend.RegisterRoutes(apiGroup, cfg.Server.JWTSecret)
+	frontend.RegisterRoutes(apiGroup, cfg.Server.JWTSecret)
 
 	// Create HTTP server
 	srv := &http.Server{
