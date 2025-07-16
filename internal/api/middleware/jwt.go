@@ -9,8 +9,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWTAuthMiddleware authenticates requests using JWT tokens.
-func JWTAuthMiddleware(secretKey string) gin.HandlerFunc {
+// JWTPublicMiddleware authenticates requests using JWT tokens.
+func JWTPublicMiddleware(secretKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -53,6 +53,14 @@ func JWTAuthMiddleware(secretKey string) gin.HandlerFunc {
 		// 	c.Set("user_id", claims["user_id"])
 		// }
 
+		c.Next()
+	}
+}
+
+func JWTAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// This middleware can be used for authenticated routes
+		// You can implement JWT validation logic here similar to JWTPublicMiddleware
 		c.Next()
 	}
 }

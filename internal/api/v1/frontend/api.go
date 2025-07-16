@@ -5,11 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"learning-companion/internal/api/handlers/auth"
 	"learning-companion/internal/api/middleware"
-	"learning-companion/internal/response"
+	"learning-companion/internal/config"
 )
 
-func RegisterRoutes(router *gin.RouterGroup, jwtSecret string) {
+func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	// Public routes
 	router.GET("/status", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -17,12 +18,13 @@ func RegisterRoutes(router *gin.RouterGroup, jwtSecret string) {
 		})
 	})
 
-	// Protected routes
-	protected := router.Group("/")
-	protected.Use(middleware.JWTAuthMiddleware(jwtSecret))
+	// public routes
+	public := router.Group("/")
+	public.Use(middleware.JWTPublicMiddleware(cfg.Server.JWTSecret))
 	{
-		protected.GET("/protected", func(c *gin.Context) {
-			response.Success(c, "This is a protected frontend  and working route!", nil, http.StatusOK)
+		public.POST("/login", func(c *gin.Context) {
+			auth.Login(c, &cfg.Validation.Password)
 		})
 	}
+	// Protected routes
 }

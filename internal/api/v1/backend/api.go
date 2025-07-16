@@ -6,9 +6,11 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"learning-companion/internal/api/middleware"
+	"learning-companion/internal/config"
+	"learning-companion/internal/response"
 )
 
-func RegisterRoutes(router *gin.RouterGroup, jwtSecret string) {
+func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	backendGroup := router.Group("/api/v1/backend")
 
 	// Public routes
@@ -18,12 +20,12 @@ func RegisterRoutes(router *gin.RouterGroup, jwtSecret string) {
 		})
 	})
 
-	// Protected routes
-	protected := backendGroup.Group("/")
-	protected.Use(middleware.JWTAuthMiddleware(jwtSecret))
+	// public routes
+	public := backendGroup.Group("/")
+	public.Use(middleware.JWTPublicMiddleware(cfg.Server.JWTSecret))
 	{
-		protected.GET("/protected", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{"message": "This is a protected backend (admin) route!"})
+		public.GET("/protected", func(c *gin.Context) {
+			response.Success(c, "This is a public Backend and working route!", nil, http.StatusOK)
 		})
 	}
 }

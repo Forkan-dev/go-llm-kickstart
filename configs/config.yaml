@@ -1,3 +1,15 @@
 server:
   port: 8080
   jwt_secret: your_super_secret_jwt_key
+
+database:
+  host: localhost
+  port: 3306
+  user: root
+  password: password
+  dbname: learning_companion
+
+validation:
+  password:
+    min_length: 8
+    max_length: 128
