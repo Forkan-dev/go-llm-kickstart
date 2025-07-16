@@ -23,7 +23,7 @@ func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	public.Use(middleware.JWTPublicMiddleware(cfg.Server.JWTSecret))
 	{
 		public.POST("/login", func(c *gin.Context) {
-			auth.Login(c, &cfg.Validation.Password)
+			auth.Login(c)
 		})
 	}
 	// Protected routes
