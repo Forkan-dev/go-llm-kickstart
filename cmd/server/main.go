@@ -18,6 +18,9 @@ func main() {
 		log.Fatalf("failed to load configuration: %v", err)
 	}
 
+	// Initialize the password validation configuration
+	validator.PasswordValidationConfig = &cfg.Validation.Password
+
 	// Connect to the database
 	if err := database.Connect(&cfg.Database); err != nil {
 		log.Fatalf("failed to connect to database: %v", err)

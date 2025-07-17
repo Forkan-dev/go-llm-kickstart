@@ -9,17 +9,17 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+var PasswordValidationConfig *config.PasswordValidationConfig
+
 // NewPasswordValidator is a factory that creates our validation function.
 // It "closes over" the passwordValidationConfig to make it available at runtime.
 func NewPasswordValidator(cfg *config.PasswordValidationConfig) validator.Func {
 	return func(fl validator.FieldLevel) bool {
 		password := fl.Field().String()
-		fmt.Printf("DEBUG: Validating password. Length: %d, MinLength: %d, MaxLength: %d\n", len(password), cfg.MinLength, cfg.MaxLength)
+		//set min man to fl
 		if len(password) < cfg.MinLength || len(password) > cfg.MaxLength {
-			fmt.Println("DEBUG: Password validation failed.")
 			return false // Validation fails
 		}
-		fmt.Println("DEBUG: Password validation passed.")
 		return true // Validation passes
 	}
 }
@@ -34,7 +34,7 @@ func GetErrorMsg(fe validator.FieldError) string {
 	case "eqfield":
 		return "The field " + fe.Field() + " must match the " + fe.Param() + " field"
 	case "password":
-		return "Password must be between 8 and 64 characters long"
+		return fmt.Sprintf("Password must be between %d and %d characters long", PasswordValidationConfig.MinLength, PasswordValidationConfig.MaxLength)
 	case "required_without":
 		return "This field is required if " + fe.Param() + " is not present"
 	}
