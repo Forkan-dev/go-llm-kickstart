@@ -12,7 +12,7 @@ import (
 )
 
 type LoginResponse struct {
-	Token     string `json:"token"`
+	Token     string `json:"access_token"`
 	ExpiresAt string `json:"expires_at"`
 }
 
@@ -59,6 +59,6 @@ func Login(c *gin.Context) {
 		Token:     acessToken,
 		ExpiresAt: parseToken.ExpiresAt.Time.Format(time.RFC3339),
 	}
-	
+
 	response.Success(c, "Login successful", loginResponse, http.StatusOK)
 }
