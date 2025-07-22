@@ -8,6 +8,7 @@ import (
 	"learning-companion/internal/api/handlers/auth"
 	"learning-companion/internal/api/middleware"
 	"learning-companion/internal/config"
+	"learning-companion/internal/response"
 )
 
 func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
@@ -22,9 +23,16 @@ func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	public := router.Group("/")
 	public.Use(middleware.JWTPublicMiddleware(cfg.Server.JWTSecret))
 	{
-		public.POST("/login", func(c *gin.Context) {
-			auth.Login(c)
-		})
+		public.POST("/login", auth.Login)
 	}
 	// Protected routes
+	protected := router.Group("/")
+	protected.Use(middleware.JWTAuthMiddleware())
+	{
+		protected.GET("/profile", func(c *gin.Context) {
+			response.Success(c, "This is a protected route", nil, http.StatusOK)
+		}) // Example protected route
+
+		protected.POST("/logout", auth.Logout) // Example logout route
+	}
 }

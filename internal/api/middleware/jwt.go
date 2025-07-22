@@ -1,7 +1,11 @@
 package middleware
 
 import (
+	"fmt"
+	"learning-companion/internal/model"
 	"learning-companion/internal/response"
+	"learning-companion/pkg/database"
+	auth "learning-companion/pkg/jwt"
 	"net/http"
 	"strings"
 
@@ -60,7 +64,40 @@ func JWTPublicMiddleware(secretKey string) gin.HandlerFunc {
 func JWTAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// This middleware can be used for authenticated routes
-		// You can implement JWT validation logic here similar to JWTPublicMiddleware
+
+		accessToken := c.GetHeader("Authorization")
+		accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+		if accessToken == "" {
+			response.Error(c, "Authorization header is required", http.StatusUnauthorized)
+			c.Abort()
+			return
+		}
+
+		valid, err := auth.ValidateToken(accessToken)
+		if err != nil || !valid {
+			response.Error(c, "Invalid or expired token", http.StatusUnauthorized)
+			c.Abort()
+			return
+		}
+
+		claim, _ := auth.GetTokenClaims(accessToken)
+		Uuid, ok := claim["user_id"].(string)
+		if !ok {
+			response.Error(c, "Invalid token claims", http.StatusUnauthorized)
+			c.Abort()
+			return
+		}
+
+		user := model.User{}
+		database.DB.Model(&user).Where("uuid = ?", Uuid).First(&user)
+		if user.ID == 0 {
+			response.Error(c, "User not found", http.StatusUnauthorized)
+			c.Abort()
+			return
+		}
+
+		c.Set("user", user)
+		fmt.Println("claim:", claim)
 		c.Next()
 	}
 }

@@ -5,15 +5,18 @@ import (
 	"learning-companion/internal/model"
 	"learning-companion/internal/response"
 	"learning-companion/pkg/database"
+	"learning-companion/pkg/jwt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type LoginResponse struct {
-	Token     string `json:"access_token"`
-	ExpiresAt string `json:"expires_at"`
+	Token        string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	ExpiresAt    string `json:"expires_at"`
 }
 
 func Login(c *gin.Context) {
@@ -56,9 +59,61 @@ func Login(c *gin.Context) {
 	}
 
 	loginResponse := LoginResponse{
-		Token:     acessToken,
-		ExpiresAt: parseToken.ExpiresAt.Time.Format(time.RFC3339),
+		Token:        acessToken,
+		RefreshToken: user.CreateRefreshToken(),
+		ExpiresAt:    parseToken.ExpiresAt.Time.Format(time.RFC3339),
 	}
 
+	refreshToken := model.RefreshToken{
+		UserID:    user.Uuid,
+		Token:     loginResponse.RefreshToken,
+		CreatedAt: time.Now(),
+		ExpiresAt: parseToken.ExpiresAt.Time,
+	}
+
+	database.DB.Model(&refreshToken).Create(&refreshToken)
+
 	response.Success(c, "Login successful", loginResponse, http.StatusOK)
+}
+
+func Logout(c *gin.Context) {
+	accessToken := c.GetHeader("Authorization")
+	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
+
+	if accessToken == "" {
+		response.Error(c, "Authorization header is required", http.StatusUnauthorized)
+		return
+	}
+
+	// parse the token to get user ID
+	claim, err := jwt.GetTokenClaims(accessToken)
+	if err != nil {
+		response.Error(c, "Invalid token: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+	Uuid, ok := claim["user_id"].(string)
+	if !ok {
+		response.Error(c, "Invalid token claims", http.StatusUnauthorized)
+		return
+	}
+	// Invalidate the refresh token in the database
+	var refreshToken model.RefreshToken
+	database.DB.Model(&refreshToken).Where("user_id= ?", Uuid).Last(&refreshToken)
+	if refreshToken.ID == 0 {
+		response.Error(c, "No refresh token found for user", http.StatusNotFound)
+		return
+	}
+	// Mark the refresh token as revoked
+	if refreshToken.Revoked {
+		response.Error(c, "Refresh token already revoked", http.StatusBadRequest)
+		return
+	}
+	
+	refreshToken.Revoked = true
+	if err := database.DB.Save(&refreshToken).Error; err != nil {
+		response.Error(c, "Failed to revoke refresh token", http.StatusInternalServerError)
+		return
+	}
+
+	response.Success(c, "Logout successful", nil, http.StatusOK)
 }
