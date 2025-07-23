@@ -18,7 +18,7 @@ func GenerateAccessToken(userID string) (string, error) {
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    "learning-companion",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Second * 20)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}

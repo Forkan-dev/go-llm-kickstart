@@ -33,6 +33,8 @@ func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
 			response.Success(c, "This is a protected route", nil, http.StatusOK)
 		}) // Example protected route
 
+		protected.GET("/testing-ai", auth.Aitesting) // Example protected route
+
 		protected.POST("/logout", auth.Logout) // Example logout route
 	}
 }

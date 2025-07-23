@@ -1,16 +1,17 @@
 package auth
 
 import (
+	"context"
+	"encoding/json"
 	"learning-companion/internal/api/request"
-	"learning-companion/internal/model"
 	"learning-companion/internal/response"
-	"learning-companion/pkg/database"
-	"learning-companion/pkg/jwt"
+	"learning-companion/internal/service/auth"
+	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/tmc/langchaingo/llms/ollama"
 )
 
 type LoginResponse struct {
@@ -19,101 +20,86 @@ type LoginResponse struct {
 	ExpiresAt    string `json:"expires_at"`
 }
 
+var authService = auth.NewService()
+
 func Login(c *gin.Context) {
-	errors := request.Validate(c)
-
-	if len(errors) > 0 {
-		response.ValidationError(c, "Validation failed", errors, http.StatusBadRequest)
+	var req request.LoginRequest
+	if err := c.ShouldBind(&req); err != nil {
+		response.Error(c, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	user := model.User{}
-	// get the user form database use ORM\
-
-	database.DB.Model(&user).Where("username = ? OR email = ?", c.PostForm("username"), c.PostForm("email")).First(&user)
-
-	// Check if user exists
-	if user.ID == 0 {
-		response.Error(c, "User not found", http.StatusNotFound)
+	user, accessToken, refreshTokenString, err := authService.Login(req.Username, req.Password)
+	if err != nil {
+		response.Error(c, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
-	// Check bycript password
-
-	if !user.CheckPassword(c.PostForm("password")) {
-		response.Error(c, "Invalid password", http.StatusUnauthorized)
-		return
-	}
-
-	// For example, validate user credentials and generate JWT token
-	acessToken := user.CreateToken()
-	if acessToken == "" {
-		response.Error(c, "Failed to create access token", http.StatusInternalServerError)
-		return
-	}
-
-	parseToken, err := user.ParseToken(acessToken)
+	parsedToken, err := user.ParseToken(accessToken)
 	if err != nil {
 		response.Error(c, "Failed to parse access token", http.StatusInternalServerError)
 		return
 	}
 
 	loginResponse := LoginResponse{
-		Token:        acessToken,
-		RefreshToken: user.CreateRefreshToken(),
-		ExpiresAt:    parseToken.ExpiresAt.Time.Format(time.RFC3339),
+		Token:        accessToken,
+		RefreshToken: refreshTokenString,
+		ExpiresAt:    parsedToken.ExpiresAt.Time.Format(time.RFC3339),
 	}
-
-	refreshToken := model.RefreshToken{
-		UserID:    user.Uuid,
-		Token:     loginResponse.RefreshToken,
-		CreatedAt: time.Now(),
-		ExpiresAt: parseToken.ExpiresAt.Time,
-	}
-
-	database.DB.Model(&refreshToken).Create(&refreshToken)
 
 	response.Success(c, "Login successful", loginResponse, http.StatusOK)
 }
 
 func Logout(c *gin.Context) {
 	accessToken := c.GetHeader("Authorization")
-	accessToken = strings.TrimPrefix(accessToken, "Bearer ")
 
-	if accessToken == "" {
-		response.Error(c, "Authorization header is required", http.StatusUnauthorized)
-		return
-	}
-
-	// parse the token to get user ID
-	claim, err := jwt.GetTokenClaims(accessToken)
+	err := authService.Logout(accessToken)
 	if err != nil {
-		response.Error(c, "Invalid token: "+err.Error(), http.StatusUnauthorized)
-		return
-	}
-	Uuid, ok := claim["user_id"].(string)
-	if !ok {
-		response.Error(c, "Invalid token claims", http.StatusUnauthorized)
-		return
-	}
-	// Invalidate the refresh token in the database
-	var refreshToken model.RefreshToken
-	database.DB.Model(&refreshToken).Where("user_id= ?", Uuid).Last(&refreshToken)
-	if refreshToken.ID == 0 {
-		response.Error(c, "No refresh token found for user", http.StatusNotFound)
-		return
-	}
-	// Mark the refresh token as revoked
-	if refreshToken.Revoked {
-		response.Error(c, "Refresh token already revoked", http.StatusBadRequest)
-		return
-	}
-	
-	refreshToken.Revoked = true
-	if err := database.DB.Save(&refreshToken).Error; err != nil {
-		response.Error(c, "Failed to revoke refresh token", http.StatusInternalServerError)
+		response.Error(c, err.Error(), http.StatusUnauthorized)
 		return
 	}
 
 	response.Success(c, "Logout successful", nil, http.StatusOK)
+}
+
+type AiTestRequest struct {
+	Prompt string `json:"prompt" binding:"required"`
+}
+
+func Aitesting(c *gin.Context) {
+	// Parse JSON body
+	prompt := c.Query("prompt")
+	if prompt == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Prompt is required"})
+		return
+	}
+
+	// Initialize Ollama model
+	llm, err := ollama.New(ollama.WithModel("mistral"))
+	if err != nil {
+		log.Printf("Ollama init error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI model initialization failed"})
+		return
+	}
+
+	ctx := context.Background()
+
+	// Generate response from Ollama
+	resp, err := llm.Call(ctx, prompt)
+	//json decode from string resp
+	var jsonResp map[string]interface{}
+	if err := json.Unmarshal([]byte(resp), &jsonResp); err != nil {
+		log.Printf("JSON unmarshal error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI response parsing failed"})
+		return
+	}
+	if err != nil {
+		log.Printf("Ollama call error: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "AI generation failed"})
+		return
+	}
+
+	resp2, err := llm.Call(ctx, prompt+" add 444 and multiply by 2 Respond with only one number as JSON: {"+"word"+": "+"value"+"}")
+	// Return success response with AI output
+	response.Success(c, "AI response generated", gin.H{"result": jsonResp, "result2": resp2}, http.StatusOK)
 }
