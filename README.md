@@ -40,7 +40,7 @@ Perfect for learning, experimenting, or kickstarting your own AI-powered backend
 
 ### 2. Pull a Local Model
 
-Start Ollama and pull a model like `llama3`:
+Start Ollama and pull a model like `mistral`:
 
 ```bash
-ollama pull llama3
+ollama pull mistral
