@@ -1,0 +1,25 @@
+# Database Configuration
+database:
+  host: "127.0.0.1"
+  port: "3306"
+  user: "root"
+  password: "password"
+  dbname: "learning_companion"
+  sslmode: "disable"
+
+# JWT Configuration
+jwt:
+  secret: "your-super-secret-key"
+  # Token expiration in minutes
+  expiration: 60 
+
+# Server Configuration
+server:
+  port: "8080"
+
+# Ollama Configuration
+ollama:
+  # The base URL for your running Ollama instance
+  base_url: "http://localhost:11434"
+  # The specific model to use for the Learning Companion
+  model: "llama3" # You can change this to phi3, gemma, etc.
