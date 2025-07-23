@@ -95,6 +95,20 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+		
+		refreshToken := model.RefreshToken{}
+		database.DB.Model(&refreshToken).Where("user_id = ?", Uuid).Last(&refreshToken)
+		if refreshToken.ID == 0 {
+			response.Error(c, "No refresh token found for user", http.StatusUnauthorized)
+			c.Abort()
+			return
+		}
+
+		if refreshToken.Revoked {
+			response.Error(c, "Refresh token has been revoked", http.StatusUnauthorized)			
+			c.Abort()
+			return
+		}
 
 		c.Set("user", user)
 		fmt.Println("claim:", claim)
