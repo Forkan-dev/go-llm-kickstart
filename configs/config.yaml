@@ -13,3 +13,7 @@ validation:
   password:
     min_length: 8
     max_length: 128
+token:
+  issuer: learning_companion
+  access_token_expiration: 60 # in minutes
+  refresh_token_expiration: 1440 # in minutes

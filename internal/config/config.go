@@ -10,6 +10,7 @@ type Config struct {
 	Server     ServerConfig     `yaml:"server"`
 	Database   DatabaseConfig   `yaml:"database"`
 	Validation ValidationConfig `yaml:"validation"`
+	Token      TokenConfig      `yaml:"token"`
 }
 
 type ValidationConfig struct {
@@ -34,17 +35,32 @@ type DatabaseConfig struct {
 	DBName   string `yaml:"dbname"`
 }
 
+type TokenConfig struct {
+	Issuer                 string `yaml:"issuer"`
+	AccessTokenExpiration  int    `yaml:"access_token_expiration"`
+	RefreshTokenExpiration int    `yaml:"refresh_token_expiration"`
+}
+
+var cfg *Config
+
 func Load() (*Config, error) {
 	data, err := os.ReadFile("configs/config.yaml")
 	if err != nil {
 		return nil, err
 	}
 
-	var cfg Config
+	cfg = &Config{}
 	err = yaml.Unmarshal(data, &cfg)
 	if err != nil {
 		return nil, err
 	}
 
-	return &cfg, nil
+	return cfg, nil
+}
+
+func Get() *Config {
+	if cfg == nil {
+		panic("config not loaded")
+	}
+	return cfg
 }

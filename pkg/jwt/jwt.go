@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"learning-companion/internal/config"
 	"log"
 	"time"
 
@@ -13,19 +14,21 @@ type TokenClaims struct {
 }
 
 func GenerateAccessToken(userID string) (string, error) {
+	appConfig := config.Get()
+	tokenConfig := appConfig.Token
+	secretKey := []byte(appConfig.Server.JWTSecret)
 	// Implement JWT token generation logic here
 	claims := TokenClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "learning-companion",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 60)),
+			Issuer:    tokenConfig.Issuer,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * time.Duration(tokenConfig.AccessTokenExpiration))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Replace
-	secretKey := []byte("your_secret_key") // Use a secure key in production
 	signedToken, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", err
@@ -35,19 +38,21 @@ func GenerateAccessToken(userID string) (string, error) {
 }
 
 func GenerateRefreshToken(userID string) (string, error) {
+	appConfig := config.Get()
+	tokenConfig := appConfig.Token
+	secretKey := []byte(appConfig.Server.JWTSecret)
 	// Implement JWT refresh token generation logic here
 	claims := TokenClaims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "learning-companion",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(30 * 24 * time.Hour)), // 30 days
+			Issuer:    tokenConfig.Issuer,
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * time.Duration(tokenConfig.RefreshTokenExpiration))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	// Replace
-	secretKey := []byte("your_secret_key") // Use a secure key in production
 	signedToken, err := token.SignedString(secretKey)
 	if err != nil {
 		return "", err
@@ -57,8 +62,8 @@ func GenerateRefreshToken(userID string) (string, error) {
 }
 
 func ParseToken(tokenString string) (*TokenClaims, error) {
+	secretKey := []byte(config.Get().Server.JWTSecret)
 	// Implement JWT token parsing logic here
-	secretKey := []byte("your_secret_key") // Use the same key used for signing
 	token, err := jwt.ParseWithClaims(tokenString, &TokenClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return secretKey, nil
 	})
