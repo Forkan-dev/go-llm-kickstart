@@ -35,7 +35,7 @@ func main() {
 	database.Migrate()
 
 	// Seed the database
-	database.Seed()
+	database.Seed(database.DB)
 
 	// Start the server
 	server.StartServer(cfg)

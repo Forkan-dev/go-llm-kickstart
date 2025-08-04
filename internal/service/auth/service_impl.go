@@ -2,7 +2,8 @@ package auth
 
 import (
 	"errors"
-	"learning-companion/internal/model"
+	"learning-companion/internal/model/auth"
+	"learning-companion/internal/model/user"
 	"learning-companion/pkg/database"
 	"learning-companion/pkg/jwt"
 	"strings"
@@ -15,8 +16,8 @@ func NewService() Service {
 	return &serviceImpl{}
 }
 
-func (s *serviceImpl) Login(username, password string) (*model.User, string, string, error) {
-	user := model.User{}
+func (s *serviceImpl) Login(username, password string) (*user.User, string, string, error) {
+	user := user.User{}
 
 	database.DB.Model(&user).Where("username = ? OR email = ?", username, username).First(&user)
 
@@ -40,7 +41,7 @@ func (s *serviceImpl) Login(username, password string) (*model.User, string, str
 
 	refreshTokenString := user.CreateRefreshToken()
 
-	refreshToken := model.RefreshToken{
+	refreshToken := auth.RefreshToken{
 		UserID:    user.Uuid,
 		Token:     refreshTokenString,
 		CreatedAt: time.Now(),
@@ -68,7 +69,7 @@ func (s *serviceImpl) Logout(accessToken string) error {
 		return errors.New("invalid token claims")
 	}
 
-	var refreshToken model.RefreshToken
+	var refreshToken auth.RefreshToken
 	database.DB.Model(&refreshToken).Where("user_id= ?", Uuid).Last(&refreshToken)
 	if refreshToken.ID == 0 {
 		return errors.New("no refresh token found for user")

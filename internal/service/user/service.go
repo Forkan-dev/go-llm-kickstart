@@ -1,11 +1,11 @@
 package user
 
-import "learning-companion/internal/model"
+import "learning-companion/internal/domain/user"
 
 type Service interface {
-	FindAll() ([]*model.User, error)
-	FindByID(id uint) (*model.User, error)
-	Create(user *model.User) error
-	Update(user *model.User) error
+	FindAll() ([]*user.User, error)
+	FindByID(id uint) (*user.User, error)
+	Create(user *user.User) error
+	Update(user *user.User) error
 	Delete(id uint) error
 }

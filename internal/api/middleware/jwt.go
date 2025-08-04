@@ -2,15 +2,16 @@ package middleware
 
 import (
 	"fmt"
-	"learning-companion/internal/model"
+	"learning-companion/internal/model/auth"
+	"learning-companion/internal/model/user"
 	"learning-companion/internal/response"
 	"learning-companion/pkg/database"
-	auth "learning-companion/pkg/jwt"
+	jwtPkg "learning-companion/pkg/jwt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 // JWTPublicMiddleware authenticates requests using JWT tokens.
@@ -73,14 +74,14 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		valid, err := auth.ValidateToken(accessToken)
+		valid, err := jwtPkg.ValidateToken(accessToken)
 		if err != nil || !valid {
 			response.Error(c, "Invalid or expired token", http.StatusUnauthorized)
 			c.Abort()
 			return
 		}
 
-		claim, _ := auth.GetTokenClaims(accessToken)
+		claim, _ := jwtPkg.GetTokenClaims(accessToken)
 		Uuid, ok := claim["user_id"].(string)
 		if !ok {
 			response.Error(c, "Invalid token claims", http.StatusUnauthorized)
@@ -88,15 +89,15 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		user := model.User{}
+		user := user.User{}
 		database.DB.Model(&user).Where("uuid = ?", Uuid).First(&user)
 		if user.ID == 0 {
 			response.Error(c, "User not found", http.StatusUnauthorized)
 			c.Abort()
 			return
 		}
-		
-		refreshToken := model.RefreshToken{}
+
+		refreshToken := auth.RefreshToken{}
 		database.DB.Model(&refreshToken).Where("user_id = ?", Uuid).Last(&refreshToken)
 		if refreshToken.ID == 0 {
 			response.Error(c, "No refresh token found for user", http.StatusUnauthorized)
@@ -105,7 +106,7 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		}
 
 		if refreshToken.Revoked {
-			response.Error(c, "Refresh token has been revoked", http.StatusUnauthorized)			
+			response.Error(c, "Refresh token has been revoked", http.StatusUnauthorized)
 			c.Abort()
 			return
 		}

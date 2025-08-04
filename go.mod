@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
+	github.com/tmc/langchaingo v0.1.13
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.39.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -36,7 +37,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pkoukk/tiktoken-go v0.1.6 // indirect
-	github.com/tmc/langchaingo v0.1.13 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
