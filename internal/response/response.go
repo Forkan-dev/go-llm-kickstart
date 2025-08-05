@@ -16,9 +16,9 @@ type ErrorResponse struct {
 }
 
 type ValidationErrorResponse struct {
-	Message string            `json:"message"`
-	Errors  map[string]string `json:"errors"`
-	Status  int               `json:"status"`
+	Message string      `json:"message"`
+	Errors  interface{} `json:"errors"`
+	Status  int         `json:"status"`
 }
 
 func Success(c *gin.Context, message string, data interface{}, status int) {
@@ -40,7 +40,7 @@ func Error(c *gin.Context, message string, status int) {
 	c.JSON(status, response)
 }
 
-func ValidationError(c *gin.Context, message string, errors map[string]string, status int) {
+func ValidationError(c *gin.Context, message string, errors interface{}, status int) {
 	response := ValidationErrorResponse{
 		Message: message,
 		Errors:  errors,
