@@ -13,12 +13,20 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 func StartServer(cfg *config.Config) {
 	// Create Gin router
 	router := gin.Default()
+
+	// CORS middleware
+	router.Use(cors.New(cors.Config{
+		AllowAllOrigins: true,
+		AllowMethods:    []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowHeaders:    []string{"Origin", "Content-Type", "Accept", "Authorization"},
+	}))
 
 	// Simple route for testing
 	router.GET("/ping", func(c *gin.Context) {

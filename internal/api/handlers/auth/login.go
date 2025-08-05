@@ -24,6 +24,7 @@ var authService = auth.NewService()
 
 func Login(c *gin.Context) {
 	var req request.LoginRequest
+
 	if err := c.ShouldBind(&req); err != nil {
 		response.Error(c, "Invalid request", http.StatusBadRequest)
 		return

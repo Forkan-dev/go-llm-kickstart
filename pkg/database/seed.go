@@ -34,9 +34,9 @@ func Seed(db *gorm.DB) {
 	// Create Subjects
 	subjects := []quiz.Subject{
 		// icon is from react icon
-		{Name: "Mathematics", Slug: "mathematics", Icon: "FiBook", Description: "The study of numbers, quantity, space, structure, and change."},
-		{Name: "Science", Slug: "science", Icon: "FaFlask", Description: "The systematic study of the structure and behavior of the physical and natural world through observation and experiment."},
-		{Name: "History", Slug: "history", Icon: "GiAncientRuins", Description: "The study of past events, particularly in human affairs."},
+		{Name: "Mathematics",  Slug: "mathematics", Icon: "FiBook", Description: "The study of numbers, quantity, space, structure, and change."},
+		{Name: "Science",  Slug: "science", Icon: "FaFlask", Description: "The systematic study of the structure and behavior of the physical and natural world through observation and experiment."},
+		{Name: "History",  Slug: "history", Icon: "GiAncientRuins", Description: "The study of past events, particularly in human affairs."},
 		{Name: "Literature", Slug: "literature", Icon: "FaBookOpen", Description: "Written works, especially those considered of superior or lasting artistic merit."},
 	}
 	db.Create(&subjects)
@@ -77,6 +77,7 @@ func Seed(db *gorm.DB) {
 		{QuizID: 4, TopicID: 4, SubjectID: 2, Title: "What is the chemical symbol for water?", Slug: "what-is-the-chemical-symbol-for-water"},
 		{QuizID: 4, TopicID: 4, SubjectID: 2, Title: "What is the atomic number of Helium?", Slug: "what-is-the-atomic-number-of-helium"},
 	}
+
 	db.Create(&questions)
 
 	// Create Answers

@@ -33,7 +33,7 @@ func NewService(db *gorm.DB) Service {
 func (s *serviceImpl) GetSubjectsForFrontend() ([]SubjectDTO, error) {
 	var subjects []quiz.Subject
 
-	err := s.db.Preload("Topics").Limit(1).Find(&subjects).Error
+	err := s.db.Limit(4).Find(&subjects).Error
 	if err != nil {
 		return nil, err
 	}
@@ -47,16 +47,6 @@ func (s *serviceImpl) GetSubjectsForFrontend() ([]SubjectDTO, error) {
 			Icon:        subject.Icon,
 			Description: subject.Description,
 			Topics:      []TopicDTO{},
-		}
-
-		for _, topic := range subject.Topics {
-			topicDTO := TopicDTO{
-				ID:          topic.ID,
-				Name:        topic.Name,
-				Slug:        topic.Slug,
-				Description: topic.Description,
-			}
-			subjectDTO.Topics = append(subjectDTO.Topics, topicDTO)
 		}
 
 		subjectDTOs = append(subjectDTOs, subjectDTO)

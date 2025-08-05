@@ -7,6 +7,7 @@ import (
 	"learning-companion/internal/response"
 	"learning-companion/pkg/database"
 	jwtPkg "learning-companion/pkg/jwt"
+	"log"
 	"net/http"
 	"strings"
 
@@ -18,6 +19,8 @@ import (
 func JWTPublicMiddleware(secretKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
+		log.Default().Println("authHeader:", authHeader)
+
 		if authHeader == "" {
 			response.Error(c, "Authorization header is required", http.StatusUnauthorized)
 			c.Abort()
@@ -32,6 +35,7 @@ func JWTPublicMiddleware(secretKey string) gin.HandlerFunc {
 		}
 
 		tokenString := parts[1]
+		tokenString = strings.TrimSpace(tokenString)
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// Validate the alg is what you expect:
@@ -40,15 +44,17 @@ func JWTPublicMiddleware(secretKey string) gin.HandlerFunc {
 			}
 			return []byte(secretKey), nil
 		})
+		// log.Default().Println("token:", token, "err:", err, err != nil)
 
 		if err != nil {
 			response.Error(c, "Invalid token: "+err.Error(), http.StatusUnauthorized)
 			c.Abort()
 			return
 		}
-
+		
 		if !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			log.Default().Println("is valid:", token.Valid)
 			c.Abort()
 			return
 		}
