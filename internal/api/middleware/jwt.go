@@ -51,7 +51,7 @@ func JWTPublicMiddleware(secretKey string) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		if !token.Valid {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 			log.Default().Println("is valid:", token.Valid)
@@ -73,13 +73,13 @@ func JWTAuthMiddleware() gin.HandlerFunc {
 		// This middleware can be used for authenticated routes
 
 		accessToken := c.GetHeader("Authorization")
+		log.Default().Println("accessToken:", accessToken)
 		accessToken = strings.TrimPrefix(accessToken, "Bearer ")
 		if accessToken == "" {
 			response.Error(c, "Authorization header is required", http.StatusUnauthorized)
 			c.Abort()
 			return
 		}
-
 		valid, err := jwtPkg.ValidateToken(accessToken)
 		if err != nil || !valid {
 			response.Error(c, "Invalid or expired token", http.StatusUnauthorized)
