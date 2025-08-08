@@ -28,7 +28,7 @@ func NewPasswordValidator(cfg *config.PasswordValidationConfig) validator.Func {
 func GetErrorMsg(fe validator.FieldError) string {
 	switch fe.Tag() {
 	case "required":
-		return "This field is required"
+		return "The " + fe.Field() + " field is required"
 	case "email":
 		return "Invalid email format"
 	case "eqfield":

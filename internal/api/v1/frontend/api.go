@@ -30,6 +30,8 @@ func RegisterRoutes(router *gin.RouterGroup, cfg *config.Config) {
 	{
 		protected.GET("/testing-ai", auth.Aitesting) // Example protected route
 		NewSubjectRoutes(protected, cfg)
+		NewQuizGenerateRoutes(protected, cfg)
+
 		protected.POST("/logout", auth.Logout) // Example logout route
 	}
 }

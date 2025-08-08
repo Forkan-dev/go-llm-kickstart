@@ -30,9 +30,8 @@ func NewService(db *gorm.DB) Service {
 	return &serviceImpl{db: db}
 }
 
-func (s *serviceImpl) GetSubjectsForFrontend() ([]SubjectDTO, error) {
+func (s *serviceImpl) GetSubjectsForFrontend(sType *string) ([]SubjectDTO, error) {
 	var subjects []quiz.Subject
-
 	err := s.db.Limit(4).Find(&subjects).Error
 	if err != nil {
 		return nil, err

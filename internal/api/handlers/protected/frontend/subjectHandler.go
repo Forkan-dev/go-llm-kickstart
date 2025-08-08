@@ -3,6 +3,7 @@ package frontend
 import (
 	"learning-companion/internal/response"
 	"learning-companion/internal/service/subject"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,7 +18,16 @@ func NewSubjectHandler(subjectService subject.Service) *SubjectHandler {
 }
 
 func (h *SubjectHandler) GetSubjects(c *gin.Context) {
-	subjects, err := h.subjectService.GetSubjectsForFrontend()
+
+	var sTypePtr *string
+
+	if sType, hasQ := c.GetQuery("type"); hasQ {
+		sTypePtr = &sType // set pointer to value
+	} else {
+		sTypePtr = nil // explicitly set nil
+	}
+	log.Println(sTypePtr)
+	subjects, err := h.subjectService.GetSubjectsForFrontend(sTypePtr)
 	if err != nil {
 		response.Error(c, err.Error(), http.StatusInternalServerError)
 		return

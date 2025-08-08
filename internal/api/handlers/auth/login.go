@@ -24,7 +24,7 @@ var authService = auth.NewService()
 
 func Login(c *gin.Context) {
 	// Validate the request and get the request data
-	req, errors := request.Validate(c)
+	req, errors := request.ValidateLogin(c)
 	if errors != nil {
 		response.ValidationError(c, "Validation failed", errors, http.StatusBadRequest)
 		return
