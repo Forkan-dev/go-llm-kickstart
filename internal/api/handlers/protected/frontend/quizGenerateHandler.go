@@ -21,15 +21,15 @@ func NewQuizGeneratHandler(service quiz.Service) *QuizGenerateHandler {
 }
 func (h *QuizGenerateHandler) GenerateQuiz(c *gin.Context) {
 	// Get the request body
-	req, err := request.ValidateGenerateQuiz(c)
+	req, validationErrors := request.ValidateGenerateQuiz(c)
 
-	if err != nil {
-		response.ValidationError(c, "Validation failed", err, http.StatusBadRequest)
+	if validationErrors != nil {
+		response.ValidationError(c, "Validation failed", validationErrors, http.StatusBadRequest)
 		return
 	}
 	log.Default().Println(req)
 
-	h.quizService.GenerateQuiz(&quiz.GenrateQuizDTO{
+	res, err := h.quizService.GenerateQuiz(&quiz.GenrateQuizDTO{
 		Subject:    req.Subject,
 		Topic:      req.Topic,
 		Difficulty: req.Difficulty,
@@ -37,7 +37,12 @@ func (h *QuizGenerateHandler) GenerateQuiz(c *gin.Context) {
 		Format:     req.Format,
 	})
 	// Generate the quiz
+	if err != nil {
+		log.Printf("Failed to generate quiz: %v", err)
+		response.Error(c, "Failed to generate quiz", http.StatusInternalServerError)
+		return
+	}
 	// Return the quiz
-	response.Success(c, "Quiz generated successfully", nil, http.StatusOK)
+	response.Success(c, "Quiz generated successfully", res, http.StatusOK)
 
 }
