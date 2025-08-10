@@ -36,7 +36,7 @@ type MCQ struct {
 }
 
 type Question struct {
-	MCQ MCQ `json:"mcq"`
+	TF
 }
 
 const (
@@ -44,7 +44,27 @@ const (
 	MCQFormat = "MCQ"
 )
 
-func buildQuizPrompt(GenrateQuizDTO *GenrateQuizDTO) (string, string) {
+func buildQuizQuestionPropmt(GenrateQuizDTO *GenrateQuizDTO, quantity int) string {
+
+	subject := GenrateQuizDTO.Subject
+	topic := GenrateQuizDTO.Topic
+	if subject == "" && topic == "" {
+		subject = "General Knowledge"
+	}
+
+	return fmt.Sprintf(
+		"Generate exactly %d short questions and answer for %s about %s with %s difficulty. "+
+			"Only output the list of questions, no answers, explanations, or extra text. "+
+			"Each question must be concise, clear, and directly related to the topic.",
+		quantity,
+		subject,
+		topic,
+		GenrateQuizDTO.Difficulty,
+	)
+}
+
+func buildQuizFormatPrompt(GenrateQuizDTO *GenrateQuizDTO, questionsPrompt string, quantity int) (string, string) {
+
 	format := GenrateQuizDTO.Format
 	switch GenrateQuizDTO.Format {
 	case "mcq", "MCQ", "Mcq":
@@ -55,52 +75,19 @@ func buildQuizPrompt(GenrateQuizDTO *GenrateQuizDTO) (string, string) {
 		format = "Question"
 	}
 
-	subject := GenrateQuizDTO.Subject
-	topic := GenrateQuizDTO.Topic
-	if subject == "" && topic == "" {
-		subject = "General Knowledge"
-	}
-
-	return format, fmt.Sprintf(`Generate a quiz based on the following Answer based only on verified facts as of 2025, generate randomly, No extra text just return the JSON array:
-				Subject: %s
-Topic: %s
-Format: %s
-Difficulty: %s
-Number of Questions: %d
-
-Rules:
-1. If Format = MCQ:
-   - Return a JSON array of objects exactly like:
-     [
-       {
-         "question": "...",
-         "options": ["...","...","...","..."],
-         "answer": "..." 
-       }
-     ]
-   - Provide exactly 4 options for each question, only one correct.
-2. If Format = True/False:
-   - Return a JSON array of objects exactly like:
-     [
-       {
-         "question": "...",
-         "answer": "True"
-       }
-     ]
-   - Use string "True" or "False" for answers.
-3. If Format = Question:
-   - Return a JSON array of objects exactly like:
-     [
-       {
-         "question": "...",
-         "answer": "..."
-       }
-     ]
-4. All output MUST be valid JSON and contain only the JSON array (no commentary or code fences).
-5. Ensure question difficulty matches the requested level.
-6. Keep content relevant to the Subject and Topic when provided.
-7. No extra text just the JSON array.
-`, subject, topic, format, GenrateQuizDTO.Difficulty, 10)
+	return format, fmt.Sprintf(
+		"Fist make sure the quantity is %d.Format the following questions and answers into strict %s JSON format. "+
+			"Questions and answers: %s. "+
+			"If the format is MCQ, each item must have exactly these keys: "+
+			"\"question\" (string), \"options\" (array of strings), and \"answer\" (string, exactly matching one of the provided options). "+
+			"If the format is True/False, each item must have \"question\" (string) and \"answer\" (boolean). "+
+			"If the format is Short Answer or Open ended, each item must have \"question\" (string) and \"answer\" (string). "+
+			"Return ONLY a valid JSON array of quiz objects. "+
+			"No text outside the JSON. No explanations. No comments. The JSON must be syntactically valid and ready for parsing.",
+		quantity,
+		format,
+		questionsPrompt,
+	)
 }
 
 func (s *quizImplService) GenerateQuiz(GenrateQuizDTO *GenrateQuizDTO) (interface{}, error) {
@@ -110,9 +97,16 @@ func (s *quizImplService) GenerateQuiz(GenrateQuizDTO *GenrateQuizDTO) (interfac
 		log.Printf("Ollama init error: %v", err)
 		return nil, err
 	}
-	format, prompt := buildQuizPrompt(GenrateQuizDTO)
+	prompt := buildQuizQuestionPropmt(GenrateQuizDTO, 5)
 	ctx := context.Background()
 	resp, err := llm.Call(ctx, prompt)
+	if err != nil {
+		log.Printf("Ollama call error: %v", err)
+		return nil, err
+	}
+
+	format, formatPrompt := buildQuizFormatPrompt(GenrateQuizDTO, resp, 5)
+	resp, err = llm.Call(ctx, formatPrompt)
 	if err != nil {
 		log.Printf("Ollama call error: %v", err)
 		return nil, err

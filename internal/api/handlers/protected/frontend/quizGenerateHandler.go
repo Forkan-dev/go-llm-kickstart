@@ -22,6 +22,7 @@ func NewQuizGeneratHandler(service quiz.Service) *QuizGenerateHandler {
 func (h *QuizGenerateHandler) GenerateQuiz(c *gin.Context) {
 	// Get the request body
 	req, validationErrors := request.ValidateGenerateQuiz(c)
+	log.Default().Println("this is validation error and req", validationErrors, req)
 
 	if validationErrors != nil {
 		response.ValidationError(c, "Validation failed", validationErrors, http.StatusBadRequest)
@@ -42,7 +43,12 @@ func (h *QuizGenerateHandler) GenerateQuiz(c *gin.Context) {
 		response.Error(c, "Failed to generate quiz", http.StatusInternalServerError)
 		return
 	}
+
+	apiResponse := map[string]interface{}{
+		"quiz":   res,
+		"format": req.Format,
+	}
 	// Return the quiz
-	response.Success(c, "Quiz generated successfully", res, http.StatusOK)
+	response.Success(c, "Quiz generated successfully", apiResponse, http.StatusOK)
 
 }
