@@ -1,5 +1,8 @@
 package quiz
 
 type Service interface {
-	GenerateQuiz(GenrateQuizDTO *GenrateQuizDTO) (interface{}, error)
+	GenerateQuiz(baseURL string, config QuizConfig) (*QuizResponse, error)
+	ValidateQuizConfig(config QuizConfig) error
+	ParseQuizResponse(llmResponse string) (*QuizResponse, error)
+	BuildPrompt(config QuizConfig) (string, error)
 }

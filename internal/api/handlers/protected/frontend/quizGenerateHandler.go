@@ -30,12 +30,14 @@ func (h *QuizGenerateHandler) GenerateQuiz(c *gin.Context) {
 	}
 	log.Default().Println(req)
 
-	res, err := h.quizService.GenerateQuiz(&quiz.GenrateQuizDTO{
-		Subject:    req.Subject,
-		Topic:      req.Topic,
-		Difficulty: req.Difficulty,
-		Type:       req.Type,
-		Format:     req.Format,
+	res, err := h.quizService.GenerateQuiz("http://localhost:11434", quiz.QuizConfig{
+		Subject:       req.Subject,
+		Topics:        []string{req.Topic},
+		Difficulty:    req.Difficulty,
+		QuestionTypes: []string{req.Format},
+		QuestionCount: 10,
+		Strategy:      "extreme",
+		MaxTokens:     120,
 	})
 	// Generate the quiz
 	if err != nil {
